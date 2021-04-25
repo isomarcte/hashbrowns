@@ -5,22 +5,24 @@ import scodec.bits._
 import munit._
 import java.security.MessageDigest
 
-final class ByteHasherSuite extends FunSuite {
-  import ByteHasherSuite._
-  test("ByteHasher MD5 Sanity Check") {
+final class HasherSuite extends FunSuite {
+  import HasherSuite._
+  test("Hasher MD5 Sanity Check") {
     // On a linux shell
     //
     // > echo -n '' | md5sum
     val emptyInputMd5Hash: Option[ByteVector] = ByteVector.fromHex("d41d8cd98f00b204e9800998ecf8427e")
 
-    assertEquals(Option(md5ByteHasher.hashByteVector(ByteVector.empty)), emptyInputMd5Hash)
-    assertEquals(Option(md5ByteHasher.hashByteStream[Pure](Stream.empty).compile.to(ByteVector)), emptyInputMd5Hash)
+    assertEquals(Option(md5Hasher.digestByteVector(ByteVector.empty).value), emptyInputMd5Hash)
+    assertEquals(Option(md5Hasher.digestByteStream[Pure](Stream.empty).value.compile.to(ByteVector)), emptyInputMd5Hash)
   }
 }
 
-object ByteHasherSuite {
-  val md5ByteHasher: ByteHasher =
-    new ByteHasher {
+object HasherSuite {
+  private final abstract class MD5
+
+  private val md5Hasher: Hasher[MD5] =
+    new Hasher[MD5] {
       private def md: MessageDigest =
         MessageDigest.getInstance("MD5")
 
