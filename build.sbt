@@ -60,11 +60,13 @@ ThisBuild / githubWorkflowPublish := Seq(
   )
 )
 
-val catsV = "2.6.0"
 val catsEffectV = "3.1.0"
+val catsV = "2.6.0"
 val fs2V = "3.0.2"
+val scodecBitsV = "1.1.26"
 
 val munitCatsEffectV = "1.0.2"
+val munitV = "0.7.25"
 
 val kindProjectorV = "0.11.3"
 val betterMonadicForV = "0.3.1"
@@ -78,7 +80,12 @@ lazy val `hashbrowns` = project.in(file("."))
 lazy val kernel = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings)
   .settings(
-    name := s"${projectName}-kernel"
+    name := s"${projectName}-kernel",
+    libraryDependencies ++= Seq(
+      "co.fs2"        %%% "fs2-core"    % fs2V,
+      "org.scodec"    %%% "scodec-bits" % scodecBitsV,
+      "org.scalameta" %%% "munit"       % munitV % Test
+    )
   )
 
 lazy val core = crossProject(JVMPlatform)
