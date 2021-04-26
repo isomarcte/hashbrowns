@@ -1,5 +1,7 @@
 package io.chrisdavenport.hashbrowns.kernel
 
+import cats._
+import cats.syntax.all._
 import fs2._
 import scodec.bits._
 
@@ -16,31 +18,37 @@ import scodec.bits._
   *       this class ''will'' not have coherence, e.g. there may be more than
   *       one instance of this class for any given Algorithm.
   */
-trait Hasher[A] extends ByteHasher {
-  import Hasher._
+trait HasherF[F[_], A] extends ByteHasherF[F] {
+  import HasherF._
 
   // final
 
   /** Create the hash/digest of a [[scodec.bits.ByteVector]] and tag the result
     * with the Algorithm.
     */
-  final def digestByteVector(value: ByteVector): Digest[A] =
-    Digest.DigestImpl(hashByteVector(value))
+  final def digestByteVector(value: ByteVector)(implicit F: Functor[F]): F[Digest[A]] =
+    hashByteVector(value).map(Digest.DigestImpl.apply _)
 
   /** Create the hash/digest of a [[fs2.Stream]] and tag the result
     * with the Algorithm.
     */
-  final def digestByteStream[F[_]](value: Stream[F, Byte]): StreamDigest[F, A] =
-    StreamDigest.StreamDigestImpl[F, A](hashByteStream[F](value))
+  final def digestByteStream[G[_]](value: Stream[G, Byte])(implicit F: Functor[F]): F[StreamDigest[G, A]] =
+    hashByteStream[G](value).map(StreamDigest.StreamDigestImpl[G, A])
 
   /** As [[#digestByteVector]] but takes an `Array[Byte]` for ease of working
     * with other APIs.
     */
-  final def digestByteArray(value: Array[Byte]): Digest[A] =
+  final def digestByteArray(value: Array[Byte])(implicit F: Functor[F]): F[Digest[A]] =
     digestByteVector(ByteVector(value))
 }
 
-object Hasher {
+object HasherF {
+
+  /** The most canonical type. Since hashing is a pure operation, it is unlikely
+    * that most implementations will need the `F` type to be anything other
+    * than Id.
+    */
+  type Hasher[A] = HasherF[Id, A]
 
   /** A wrapper type for a [[scodec.bits.ByteVector]] which denotes the
     * Algorithm used to create the hash/digest.
@@ -53,7 +61,7 @@ object Hasher {
   }
 
   object Digest {
-    private[Hasher] final case class DigestImpl[A](override val value: ByteVector) extends Digest[A]
+    private[HasherF] final case class DigestImpl[A](override val value: ByteVector) extends Digest[A]
   }
 
   /** A wrapper type for a [[fs2.Stream]] which denotes the
@@ -67,6 +75,6 @@ object Hasher {
   }
 
   object StreamDigest {
-    private[Hasher] final case class StreamDigestImpl[F[_], A](override val value: Stream[F, Byte]) extends StreamDigest[F, A]
+    private[HasherF] final case class StreamDigestImpl[F[_], A](override val value: Stream[F, Byte]) extends StreamDigest[F, A]
   }
 }

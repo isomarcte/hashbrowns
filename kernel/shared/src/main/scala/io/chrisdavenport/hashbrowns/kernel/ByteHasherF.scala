@@ -14,6 +14,9 @@ import scodec.bits._
   * input, the output is always the same, but the same output may be shared
   * between more than one input. This is called a "hash collision".
   *
+  * @note This is ''not'' a typeclass. Clearly it can't be because it doesn't
+  *       have any type parameters.
+  *
   * @note The `F` parameter here is included to allow for the most general
   *       possible implementations, but it is expected that for most
   *       implementations `F` will be [[cats.Id]].
